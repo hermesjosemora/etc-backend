@@ -1,8 +1,0 @@
-/home/hma/hmaProjects/etc-backend/etc-backend/src/main/java/etc/backend/dto/response/LoginResponse.java
-/home/hma/hmaProjects/etc-backend/etc-backend/src/main/java/etc/backend/dto/login/Login.java
-/home/hma/hmaProjects/etc-backend/etc-backend/src/main/java/etc/backend/controller/ETCResource.java
-/home/hma/hmaProjects/etc-backend/etc-backend/src/main/java/etc/backend/dto/response/BaseResponse.java
-/home/hma/hmaProjects/etc-backend/etc-backend/src/main/java/etc/backend/repository/UsersRepository.java
-/home/hma/hmaProjects/etc-backend/etc-backend/src/main/java/etc/backend/dto/response/ErrorInfo.java
-/home/hma/hmaProjects/etc-backend/etc-backend/src/main/java/etc/backend/service/LoginLogic.java
-/home/hma/hmaProjects/etc-backend/etc-backend/src/main/java/etc/backend/domain/Users.java
