@@ -3,19 +3,15 @@ package etc.backend.controller;
 import etc.backend.dto.login.Login;
 import etc.backend.dto.response.LoginResponse;
 import etc.backend.dto.text.Text;
+import etc.backend.service.JsonWebToken;
 import etc.backend.service.LoginLogic;
 import etc.backend.service.SecurityLogic;
-import org.apache.commons.codec.binary.Base64;
+import org.jboss.logging.Logger;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.FileOutputStream;
-import java.security.Key;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.Security;
 
 @Path("/users")
 public class ETCResource {
@@ -23,21 +19,31 @@ public class ETCResource {
   LoginLogic loginLogic;
   @Inject
   SecurityLogic securityLogic;
+  @Inject
+  JsonWebToken jwt;
 
   /*DESENCRIPTA UN TEXTO ENVIADO*/
   @POST
   @Path("/decrypt")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response decrypt(Text text) {
+  public Response decrypt(Text text, @HeaderParam("Authorization") String pToken) {
     LoginResponse loginResponse = new LoginResponse();
     int code;
     try {
-      loginResponse.setMessage("SUCCESS");
-      loginResponse.setResult(true);
-      loginResponse.setText(this.securityLogic.desencrypt(text.getText()));
+      String token = pToken.replace("Bearer", "");
       code = 200;
+      if (jwt.validToken(token)) {
+        loginResponse.setMessage("SUCCESS");
+        loginResponse.setResult(true);
+        loginResponse.setText(this.securityLogic.desencrypt(text.getText()));
+      } else {
+        loginResponse.setMessage("ERRORTOKEN");
+        loginResponse.setResult(false);
+        loginResponse.setMessage("Token invalido");
+      }
     } catch (Exception ex) {
       code = 401;
+      Logger.getLogger(ETCResource.class.getName()).log(Logger.Level.ERROR, null, ex);
     }
     return Response.status(code).entity(loginResponse).build();
   }
@@ -46,14 +52,22 @@ public class ETCResource {
   @POST
   @Path("/encryp_text")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response encrypt(Text text, @QueryParam("idUser") Integer idUser) {
+  public Response encryp_text(Text text, @HeaderParam("Authorization") String pToken) {
     LoginResponse loginResponse = new LoginResponse();
     int code;
     try {
-      loginResponse = this.loginLogic.insertText(text, idUser);
+      String token = pToken.replace("Bearer", "");
       code = 200;
+      if (jwt.validToken(token)) {
+        loginResponse = this.loginLogic.insertText(text, jwt.decodeToken(token).get("id_user").getAsInt());
+      } else {
+        loginResponse.setMessage("ERRORTOKEN");
+        loginResponse.setResult(false);
+        loginResponse.setMessage("Token invalido");
+      }
     } catch (Exception ex) {
       code = 401;
+      Logger.getLogger(ETCResource.class.getName()).log(Logger.Level.ERROR, null, ex);
     }
     return Response.status(code).entity(loginResponse).build();
   }
@@ -62,16 +76,25 @@ public class ETCResource {
   @POST
   @Path("/encrypt")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response encrypt(Text text) {
+  public Response encrypt(Text text, @HeaderParam("Authorization") String pToken) {
     LoginResponse loginResponse = new LoginResponse();
     int code;
     try {
-      loginResponse.setMessage("SUCCESS");
-      loginResponse.setResult(true);
-      loginResponse.setText(this.securityLogic.encrypt(text.getText()));
+      String token = pToken.replace("Bearer", "");
       code = 200;
+      if (jwt.validToken(token)) {
+        loginResponse.setMessage("SUCCESS");
+        loginResponse.setResult(true);
+        loginResponse.setText(this.securityLogic.encrypt(text.getText()));
+        code = 200;
+      } else {
+        loginResponse.setMessage("ERRORTOKEN");
+        loginResponse.setResult(false);
+        loginResponse.setMessage("Token invalido");
+      }
     } catch (Exception ex) {
       code = 401;
+      Logger.getLogger(ETCResource.class.getName()).log(Logger.Level.ERROR, null, ex);
     }
     return Response.status(code).entity(loginResponse).build();
   }
@@ -85,7 +108,9 @@ public class ETCResource {
     LoginResponse loginResponse = new LoginResponse();
     int code;
     try {
-      Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+      //Comentado para que no genere problemas si se ejecuta
+      //realizarle un permiso
+     /* Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
       KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA", "BC");
       generator.initialize(2048);
       KeyPair pair = generator.generateKeyPair();
@@ -108,10 +133,11 @@ public class ETCResource {
       //ARCHIVO DE LLAVE PUBLICA CON BASE64
       try (FileOutputStream outPublic = new FileOutputStream("keyb64.pub")) {
         outPublic.write(Base64.encodeBase64String(pubKey.getEncoded()).getBytes());
-      }
+      }*/
       code = 200;
     } catch (Exception ex) {
       code = 401;
+      Logger.getLogger(ETCResource.class.getName()).log(Logger.Level.ERROR, null, ex);
     }
     return Response.status(code).entity(loginResponse).build();
   }
@@ -128,6 +154,7 @@ public class ETCResource {
       code = 200;
     } catch (Exception ex) {
       code = 401;
+      Logger.getLogger(ETCResource.class.getName()).log(Logger.Level.ERROR, null, ex);
     }
     return Response.status(code).entity(loginResponse).build();
   }
@@ -144,6 +171,7 @@ public class ETCResource {
       code = 200;
     } catch (Exception ex) {
       code = 401;
+      Logger.getLogger(ETCResource.class.getName()).log(Logger.Level.ERROR, null, ex);
     }
     return Response.status(code).entity(loginResponse).build();
   }
@@ -152,14 +180,22 @@ public class ETCResource {
   @GET
   @Path("/text_list")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response textList(@QueryParam("idUser") Integer idUser) {
+  public Response textList(@HeaderParam("Authorization") String pToken) {
     LoginResponse loginResponse = new LoginResponse();
     int code;
     try {
-      loginResponse = this.loginLogic.getTextForUsers(idUser);
+      String token = pToken.replace("Bearer", "");
       code = 200;
+      if (jwt.validToken(token)) {
+        loginResponse = this.loginLogic.getTextForUsers(jwt.decodeToken(token).get("id_user").getAsInt());
+      } else {
+        loginResponse.setMessage("ERRORTOKEN");
+        loginResponse.setResult(false);
+        loginResponse.setMessage("Token invalido");
+      }
     } catch (Exception ex) {
       code = 401;
+      Logger.getLogger(ETCResource.class.getName()).log(Logger.Level.ERROR, null, ex);
     }
     return Response.status(code).entity(loginResponse).build();
   }

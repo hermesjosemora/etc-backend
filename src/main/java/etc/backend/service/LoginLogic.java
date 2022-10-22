@@ -1,5 +1,6 @@
 package etc.backend.service;
 
+import com.google.gson.JsonObject;
 import etc.backend.domain.TextForUsers;
 import etc.backend.domain.Users;
 import etc.backend.dto.login.Login;
@@ -24,9 +25,11 @@ public class LoginLogic {
   EntityManager em;
   @Inject
   SecurityLogic securityLogic;
+  @Inject
+  JsonWebToken jwt;
 
   private Users castData(Login login) {
-    return new Users(login.getFullName(), login.getMail(), login.getUserName(), this.securityLogic.encrypt(login.getPassword()));
+    return new Users(login.getFullname(), login.getMail(), login.getUsername(), this.securityLogic.encrypt(login.getPassword()));
   }
 
   public String create(Users user) {
@@ -65,6 +68,7 @@ public class LoginLogic {
       for (TextForUsers textForUsers : list) {
         Text text = new Text();
         text.setText(this.securityLogic.desencrypt(textForUsers.getText()));
+        text.setId(textForUsers.getId());
         textList.add(text);
       }
       //devuelvo la lsita de los textos a mostrar
@@ -128,12 +132,12 @@ public class LoginLogic {
       } else {
         //usuario ya existía
         loginResponse.setResult(false);
-        loginResponse.setMessage("EXISTE OTRO USUARIO REGISTRADO");
+        loginResponse.setMessage("El nombre de usuario esta reservado, intentar con otro");
       }
     } catch (Exception ex) {
       Logger.getLogger(LoginLogic.class.getName()).log(Logger.Level.ERROR, null, ex);
       loginResponse.setResult(false);
-      loginResponse.setMessage("ERROR AL REGISTRAR USUARIO");
+      loginResponse.setMessage("Error al registrar usuario");
     }
     return loginResponse;
   }
@@ -145,24 +149,27 @@ public class LoginLogic {
   public LoginResponse validLogin(Login login) {
     LoginResponse loginResponse = new LoginResponse();
     try {
-      Optional<Users> list = this.findByUsername(login.getUserName());
+      Optional<Users> list = this.findByUsername(login.getUsername());
       if (list.isPresent()) {
         //si existe valido la clave
         Users user = list.get();
         if (this.securityLogic.desencrypt(user.getPass()).equals(login.getPassword())) {
           //si son iguales respondo correctamente
-          loginResponse.setIdUser(user.getId());
+          JsonObject data = new JsonObject();
+          data.addProperty("id_user", user.getId());
+          data.addProperty("username", user.getUsername());
+          loginResponse.setToken(jwt.generateToken(data));
           loginResponse.setResult(true);
           loginResponse.setMessage("SUCCESS");
         } else {
           //clave incorrecta
           loginResponse.setResult(false);
-          loginResponse.setMessage("CLAVE INCORRECTA");
+          loginResponse.setMessage("Clave inciorrecta");
         }
       } else {
         //no existe este usuario
         loginResponse.setResult(false);
-        loginResponse.setMessage("USUARIO NO EXISTE");
+        loginResponse.setMessage("El usuario no existe");
       }
     } catch (Exception ex) {
       Logger.getLogger(LoginLogic.class.getName()).log(Logger.Level.ERROR, null, ex);

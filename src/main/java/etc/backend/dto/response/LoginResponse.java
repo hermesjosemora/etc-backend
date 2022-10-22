@@ -1,22 +1,13 @@
 package etc.backend.dto.response;
 
-import etc.backend.domain.TextForUsers;
 import etc.backend.dto.text.Text;
 
 import java.util.List;
 
 public class LoginResponse extends BaseResponse {
-  private Integer idUser;
+  private String token;
   private String text;
   private List<Text> textForUsersList;
-
-  public List<Text> getTextForUsersList() {
-    return textForUsersList;
-  }
-
-  public void setTextForUsersList(List<Text> textForUsersList) {
-    this.textForUsersList = textForUsersList;
-  }
 
   public String getText() {
     return text;
@@ -26,11 +17,19 @@ public class LoginResponse extends BaseResponse {
     this.text = text;
   }
 
-  public Integer getIdUser() {
-    return idUser;
+  public List<Text> getTextForUsersList() {
+    return textForUsersList;
   }
 
-  public void setIdUser(Integer idUser) {
-    this.idUser = idUser;
+  public void setTextForUsersList(List<Text> textForUsersList) {
+    this.textForUsersList = textForUsersList;
+  }
+
+  public String getToken() {
+    return token;
+  }
+
+  public void setToken(String token) {
+    this.token = token;
   }
 }
